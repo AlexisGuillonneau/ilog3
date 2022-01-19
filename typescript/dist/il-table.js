@@ -1,5 +1,4 @@
 "use strict";
-//import { sort } from "./sort";
 let css = document.createElement("template");
 css.innerHTML = `
 <style>
@@ -126,12 +125,15 @@ class TableList extends HTMLElement {
                 return result * sortOrder;
             };
         };
-        this.restoreDefaultSorting = (sortElementToPrevent) => {
+        this.restoreDefaultSorting = (sortElementToPrevent, filterElementToPrevent) => {
             let tableHead = this.shadow.querySelector('thead');
             let inputs = tableHead.querySelectorAll('input');
             inputs.forEach((input) => {
-                input.value = "";
-                input.setAttribute("hidden", "true");
+                let dataKey = input.parentElement.getAttribute("data-key");
+                if (dataKey != (filterElementToPrevent === null || filterElementToPrevent === void 0 ? void 0 : filterElementToPrevent.getAttribute("data-key"))) {
+                    input.value = "";
+                    input.setAttribute("hidden", "true");
+                }
             });
             let sortElements = tableHead.querySelectorAll(".sortable");
             sortElements.forEach((elt) => {
@@ -149,7 +151,7 @@ class TableList extends HTMLElement {
             let orderElement = elt.lastElementChild;
             let order = orderElement.getAttribute("data-order");
             orderElement.remove();
-            this.restoreDefaultSorting(elt);
+            this.restoreDefaultSorting(elt, undefined);
             let sortedData = [...this.data];
             switch (order) {
                 case "0":
@@ -176,15 +178,7 @@ class TableList extends HTMLElement {
         this.handleFilter = (evt) => {
             let elt = evt.target;
             console.log('filter');
-            let tableHead = this.shadow.querySelector('thead');
-            let inputs = tableHead.querySelectorAll('input');
-            inputs.forEach((input) => {
-                let dataKey = input.parentElement.getAttribute('data-key');
-                if (dataKey != elt.parentElement.getAttribute("data-key")) {
-                    input.value = "";
-                    input.setAttribute("hidden", "true");
-                }
-            });
+            this.restoreDefaultSorting(undefined, elt.parentElement);
             let tableBody = this.shadow.querySelector("tbody");
             let tableRow = tableBody.querySelectorAll(`tr[hidden="true"]`);
             tableRow.forEach((tr) => tr.removeAttribute("hidden"));
@@ -202,31 +196,6 @@ class TableList extends HTMLElement {
     }
     connectedCallback() {
         this.initTable();
-        // fetch(this.src,{headers: {'Accept':'application/json'}})
-        // .then(response => response.json())
-        // .then(data => {
-        //     if(Object.keys(data).length != 1){
-        //         this._items = data
-        //     }else{
-        //         this._items = data[Object.keys(data)[0]]; 
-        //     }
-        //     console.log(data);
-        //     this.initTable();
-        //     const _sortButton = this.querySelectorAll(".sort")
-        //     const _filterButton = this.querySelectorAll(".filter")
-        //     const _filterInput = this.querySelectorAll(".search")
-        //     // _sortButton.forEach((btn) => {
-        //     //     btn.addEventListener("click", this.handleSort)
-        //     // })
-        //     // _filterButton.forEach((btn) => {
-        //     //     btn.addEventListener("click", this.handleFilter)
-        //     // })
-        //     // _filterInput.forEach((btn) => {
-        //     //     btn.addEventListener("keydown", this.handleSearch)
-        //     // })
-        //     // this.loadCacheValues()
-        // })
-        // .catch(error => console.error(error))
     }
     static get observedAttributes() {
         return ["src", "columns"];
@@ -268,15 +237,7 @@ class TableList extends HTMLElement {
         let value = elt.value.trim();
         let parentElement = elt.parentElement;
         let key = parentElement.getAttribute("data-key");
-        let tableHead = this.shadow.querySelector('thead');
-        let inputs = tableHead.querySelectorAll('input');
-        inputs.forEach((input) => {
-            let dataKey = input.parentElement.getAttribute("data-key");
-            if (dataKey != parentElement.getAttribute("data-key")) {
-                input.value = "";
-                input.setAttribute("hidden", "true");
-            }
-        });
+        this.restoreDefaultSorting(undefined, parentElement);
         let tableBody = this.shadow.querySelector("tbody");
         let tableData = tableBody.querySelectorAll(`td[data-header="${key}"]`);
         tableData.forEach((td) => {
@@ -312,26 +273,6 @@ class TableList extends HTMLElement {
         const line = tplLine(props, data);
         tbody.insertAdjacentHTML("beforeend", line);
     }
-    // update() {
-    //     let tableBody: HTMLElement |null = this.querySelector("tbody")
-    //     this.querySelector("tbody")!.innerHTML = ""
-    //     this._rows.forEach((row) => {
-    //         var toInsert = `<tr id="tr_${row['id']}">`
-    //         this._columns.forEach((column) => {
-    //             if(row.hasOwnProperty(column) && row[column] != null) {
-    //                 toInsert +=  `<td data-header="${column}" data-type="${typeof row[column]}"><span class="badge ${typeof row[column]}">${this.getLibBadge(typeof row[column])}</span> <span>${row[column]}</span></td>`
-    //             }
-    //             else {
-    //                 row[column] = null
-    //                 toInsert += `<td></td>`
-    //             }
-    //         })
-    //         toInsert += `</tr>`
-    //         tableBody!.insertAdjacentHTML("beforeend",toInsert);
-    //     });
-    //     localStorage.setItem('data',this._rows)
-    //     //console.log(this._rows.sort(dynamicSortMultiple("author","id")))
-    // }
     loadData() {
         if (this.src == "")
             console.error("specify base URL of http data service in src attribute");

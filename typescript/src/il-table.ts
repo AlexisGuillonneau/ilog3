@@ -202,15 +202,7 @@ class TableList extends HTMLElement{
             let value = elt.value.trim()
             let parentElement = elt.parentElement
             let key = parentElement!.getAttribute("data-key")
-            let tableHead: HTMLElement = this.shadow.querySelector('thead')
-            let inputs = tableHead.querySelectorAll('input')
-            inputs.forEach((input) => {
-                let dataKey = input.parentElement!.getAttribute("data-key")
-                if (dataKey != parentElement!.getAttribute("data-key")) {
-                    input.value = ""
-                    input.setAttribute("hidden","true")
-                }
-            })
+            this.restoreDefaultSorting(undefined,parentElement!)
             let tableBody: HTMLElement = this.shadow.querySelector("tbody")
             let tableData = tableBody.querySelectorAll(`td[data-header="${key}"]`)
             tableData.forEach((td) => {
@@ -230,12 +222,16 @@ class TableList extends HTMLElement{
         }
     }
 
-    restoreDefaultSorting = (sortElementToPrevent: HTMLElement) => {
+    restoreDefaultSorting = (sortElementToPrevent?: HTMLElement, filterElementToPrevent?: HTMLElement) => {
         let tableHead: HTMLElement = this.shadow.querySelector('thead')
         let inputs = tableHead.querySelectorAll('input')
         inputs.forEach((input) => {
-            input.value = ""
+            let dataKey = input.parentElement!.getAttribute("data-key")
+            if (dataKey != filterElementToPrevent?.getAttribute("data-key")) {
+                input.value = ""
             input.setAttribute("hidden","true")
+            }
+            
         })
         let sortElements = tableHead.querySelectorAll(".sortable")
         sortElements.forEach((elt) => {
@@ -243,7 +239,7 @@ class TableList extends HTMLElement{
                 let orderElement = elt.lastElementChild
                 orderElement!.remove()
                 elt.insertAdjacentHTML("beforeend",tplOrder("0","▶"))
-                }
+            }
             
         })
     }
@@ -255,7 +251,7 @@ class TableList extends HTMLElement{
         let orderElement = elt.lastElementChild
         let order = orderElement!.getAttribute("data-order")
         orderElement!.remove()
-        this.restoreDefaultSorting(elt)
+        this.restoreDefaultSorting(elt, undefined)
         let sortedData = [...this.data]
         switch(order) {
             case "0":
@@ -286,15 +282,7 @@ class TableList extends HTMLElement{
     handleFilter = (evt: Event) => {
         let elt = evt.target as HTMLElement
         console.log('filter')
-        let tableHead: HTMLElement = this.shadow.querySelector('thead')
-        let inputs = tableHead.querySelectorAll('input')
-        inputs.forEach((input) => {
-            let dataKey = input.parentElement!.getAttribute('data-key')
-            if(dataKey != elt.parentElement!.getAttribute("data-key")) {
-                input.value = ""
-                input.setAttribute("hidden","true")
-            }
-        })
+        this.restoreDefaultSorting(undefined,elt.parentElement!)    
         let tableBody: HTMLElement = this.shadow.querySelector("tbody")
         let tableRow = tableBody.querySelectorAll(`tr[hidden="true"]`)
         tableRow.forEach((tr) => tr.removeAttribute("hidden"))
