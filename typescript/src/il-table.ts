@@ -1,60 +1,69 @@
-//import { sort } from "./sort";
-
-let template = document.createElement("template");
-template.innerHTML  = `
+let css = document.createElement("template");
+css.innerHTML  = `
+<style>
+table {
+    font-family: Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
     
-    <style>
-    .badge {
-        display: inline-block;
-        min-width: 1.5em; /* em unit */
-        padding: .3em; /* em unit */
-        border-radius: 100%;
-        font-size: 14px;
-        text-align: center;
-        color: #fefefe;
-    }
-    .string {
-        background: #1779ba;
-    }
-    .number {
-        background: #a2ade8;
-    }
-    .undefined {
-        background: #a3101f;
-    }
-    .object {
-        background: #137847;
-    }
-    .boolean {
-        min-height: 1.5em;
-        margin-bottom: 0px;
-        background: #b35a27;
-    }
-    .labels {
-        background-color: #D3D3D3;
-        /*width: 100%-4rem;*/
-        padding: 2rem;
-        box-shadow: 0 1.5rem 1rem -1rem rgba(0, 0, 0, .1);
-        border-radius: .3rem;
-    }
-    </style>
-    <div class="labels">
-        <span class="badge string">a-Z</span> <span>String</span>
-        <span class="badge number">0-9</span> <span>Number</span>
-        <span class="badge object">{ }</span> <span>Object/span>
-        <span class="badge undefined">NaN</span> <span>Undefined</span>
-        <span class="badge boolean"> </span> <span>Boolean</span>
-    </div>
-    <table>
-        <thead>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
+}
+thead {
+    background-color: #4da6ff;
+    font-size: 20px;
+}
+td, tr {
+    border-style: solid;
+    border-color: black;
+    border-width: 2px;
+}
+tr:nth-child(even){background-color: #f2f2f2;}
+.filter{
+    background-color: grey;
+    border-radius: 25px;
+}
+.search{
+    border-radius: 25px;
+    border-width: 1px;
+}
+tbody>tr:hover {background-color: #ccc;}
+.badge {
+    display: inline-block;
+    min-width: 1.5em; /* em unit */
+    padding: .3em; /* em unit */
+    border-radius: 100%;
+    font-size: 14px;
+    text-align: center;
+    color: #fefefe;
+}
+.string {
+    background: #1779ba;
+}
+.number {
+    background: #a2ade8;
+}
+.undefined {
+    background: #a3101f;
+}
+.object {
+    background: #137847;
+}
+.boolean {
+    min-height: 1.5em;
+    margin-bottom: 0px;
+    background: #b35a27;
+}
+.labels {
+    background-color: #D3D3D3;
+    /*width: 100%-4rem;*/
+    padding: 2rem;
+    box-shadow: 0 1.5rem 1rem -1rem rgba(0, 0, 0, .1);
+    border-radius: .3rem;
+}
+.sortable{
+    cursor: pointer;
+}
+</style>
 `
-
-
-
 interface ICell {
     [key: string]: any
 }
@@ -92,7 +101,9 @@ const getLibBadge = (type: string) => {
 
 const concat = (res: string, str: string) => res + str
 
-const tplFilters = (): string => ` <button type="button" class="sort" data-order="1">Sort 1</button><button type="button" class="sort" data-order="-1">Sort -1</button><button type="button" class="filter">Filter</button><input type="text" class="search" hidden/>`
+const tplFilters = (): string => ` <button type="button" class="filter">Filter</button><input type="text" class="search" hidden/>`
+
+const tplOrder = (order: string, cartet: string) => `<span data-order="${order}">${cartet}</span>`
 
 const tplCell = (data: any, column: string) => `<td data-header="${column}" data-type="${typeof data}">
     <span class="badge ${typeof data}">${getLibBadge(typeof data)}</span><span>${data}</span>
@@ -105,7 +116,7 @@ ${props.keys.map(key => tplCell(data.row[key], key)).reduce(concat)}
 const tplHeader = (props: IConfig): string => {
     let header = ""
     for(let i = 0; i< props.keys.length; i++){
-        header += `<td data-key="${props.keys[i]}">${props.headers[i]}${tplFilters()}</td>`
+        header += `<td data-key="${props.keys[i]}"><span class="sortable">${props.headers[i]} <span data-order="0">▶</span></span>${tplFilters()}</td>`
     }
     return header
 }
@@ -121,14 +132,7 @@ const tplTable = (props: IConfig) => `
 
 class TableList extends HTMLElement{
 
-    protected _items:any = {}
     protected data: IRow[] = []
-
-    protected _columns:Array<String> = [];
-    protected _rows = [];
-
-    protected _filters:any = {}
-    protected _sorts:any = {}
 
     protected shadow: any
 
@@ -138,56 +142,25 @@ class TableList extends HTMLElement{
         super();
 
         this.shadow = this.attachShadow({ mode: "open"});
+        this.shadow.appendChild(css.content.cloneNode(true))
         //_shadow.appendChild(template.content.cloneNode(true))
 
     }
 
     connectedCallback() {
-        this.initTable()
-        // fetch(this.src,{headers: {'Accept':'application/json'}})
-        // .then(response => response.json())
-        // .then(data => {
-        //     if(Object.keys(data).length != 1){
-        //         this._items = data
-        //     }else{
-        //         this._items = data[Object.keys(data)[0]]; 
-        //     }
-        //     console.log(data);
-            
-        //     this.initTable();
-        //     const _sortButton = this.querySelectorAll(".sort")
-        //     const _filterButton = this.querySelectorAll(".filter")
-        //     const _filterInput = this.querySelectorAll(".search")
-        //     // _sortButton.forEach((btn) => {
-        //     //     btn.addEventListener("click", this.handleSort)
-        //     // })
-        //     // _filterButton.forEach((btn) => {
-        //     //     btn.addEventListener("click", this.handleFilter)
-        //     // })
-        //     // _filterInput.forEach((btn) => {
-        //     //     btn.addEventListener("keydown", this.handleSearch)
-        //     // })
-        //     // this.loadCacheValues()
-        // })
-        // .catch(error => console.error(error))
-
-        
+        this.initTable()        
     }
 
     static get observedAttributes() {
         return ["src", "columns"]
     }
 
-    attributeChangedCallback(namAttr: string, valNew: string, valOld: string) {
+    attributeChangedCallback(namAttr: string, valOld: string, valNew: string) {
         console.log(`attribute ${namAttr} changes from ${valOld} to ${valNew}`)
     }
 
     disconnectedCallback() {
-        this.querySelector('tbody')!.innerHTML = "";
-        this.querySelector('tbhead')!.innerHTML = "";
-        const _sortButton = this.querySelectorAll(".sort")
-        const _filterButton = this.querySelectorAll(".filter")
-        const _filterInput = this.querySelectorAll(".search")
+       
 
         // _sortButton.forEach((btn) => {
         //     btn.removeEventListener("click", this.handleSort);
@@ -201,8 +174,8 @@ class TableList extends HTMLElement{
     }
 
     refreshCacheValues() {
-        localStorage.setItem('filter', JSON.stringify(this._filters))
-        localStorage.setItem('sort', JSON.stringify(this._sorts))
+        // localStorage.setItem('filter', JSON.stringify(this._filters))
+        // localStorage.setItem('sort', JSON.stringify(this._sorts))
         
     }
 
@@ -257,22 +230,57 @@ class TableList extends HTMLElement{
         }
     }
 
-    handleSort = (evt: Event) => {
-        let elt = evt.target as HTMLInputElement
+    restoreDefaultSorting = (sortElementToPrevent: HTMLElement) => {
+        let tableHead: HTMLElement = this.shadow.querySelector('thead')
+        let inputs = tableHead.querySelectorAll('input')
+        inputs.forEach((input) => {
+            input.value = ""
+            input.setAttribute("hidden","true")
+        })
+        let sortElements = tableHead.querySelectorAll(".sortable")
+        sortElements.forEach((elt) => {
+            if(elt != sortElementToPrevent) {
+                let orderElement = elt.lastElementChild
+                orderElement!.remove()
+                elt.insertAdjacentHTML("beforeend",tplOrder("0","▶"))
+                }
+            
+        })
+    }
+
+    handleSorting = (evt: MouseEvent) => {
+        let elt = evt.currentTarget as HTMLElement
         let parentElement = elt.parentElement
-        if(parentElement != null){
-            let key = parentElement.getAttribute("data-key")
-            let order = elt.getAttribute("data-order")
-            let sortedData = [...this.data]
-            order == "-1" ? sortedData.sort(this.dynamicSort("-"+key)) : sortedData.sort(this.dynamicSort(key?key:""))
-            const table = this.shadow.querySelector("table")!
-            const tbody = table.tBodies[0]
-            let i = 0
-            sortedData.forEach((row) => {
-                this.appendRow(tbody,{id:i,row:row})
-                i++;
-            })
+        let key = parentElement!.getAttribute("data-key")
+        let orderElement = elt.lastElementChild
+        let order = orderElement!.getAttribute("data-order")
+        orderElement!.remove()
+        this.restoreDefaultSorting(elt)
+        let sortedData = [...this.data]
+        switch(order) {
+            case "0":
+                elt.insertAdjacentHTML("beforeend",tplOrder("1","▲"))
+                sortedData.sort(this.dynamicSort(key?key:""))
+                break
+            case "-1":
+                elt.insertAdjacentHTML("beforeend",tplOrder("0","▶"))
+                sortedData = this.data
+                break
+            case "1":
+                elt.insertAdjacentHTML("beforeend",tplOrder("-1","▼"))
+                sortedData.sort(this.dynamicSort("-"+key))
+                break
         }
+        const table = this.shadow.querySelector("table")!
+        const tbody = table.tBodies[0]
+        let i = 0
+        sortedData.forEach((row) => {
+            this.appendRow(tbody,{id:i,row:row})
+            i++;
+        })
+
+        
+
     }
 
     handleFilter = (evt: Event) => {
@@ -299,10 +307,9 @@ class TableList extends HTMLElement{
         }
     }
 
-    isInColumns(column: string) {
-        return this._columns.includes(column);
+    set columns(valNew: string) {
+        this.setAttribute("columns",valNew)
     }
-
     
 
     get columns(): string {
@@ -332,35 +339,6 @@ class TableList extends HTMLElement{
         const line = tplLine(props,data)
      
         tbody.insertAdjacentHTML("beforeend", line)
-    }
-
-    // update() {
-    //     let tableBody: HTMLElement |null = this.querySelector("tbody")
-    //     this.querySelector("tbody")!.innerHTML = ""
-        
-
-    //     this._rows.forEach((row) => {
-    //         var toInsert = `<tr id="tr_${row['id']}">`
-    //         this._columns.forEach((column) => {
-    //             if(row.hasOwnProperty(column) && row[column] != null) {
-    //                 toInsert +=  `<td data-header="${column}" data-type="${typeof row[column]}"><span class="badge ${typeof row[column]}">${this.getLibBadge(typeof row[column])}</span> <span>${row[column]}</span></td>`
-    //             }
-    //             else {
-    //                 row[column] = null
-    //                 toInsert += `<td></td>`
-    //             }
-    //         })
-    //         toInsert += `</tr>`
-    //         tableBody!.insertAdjacentHTML("beforeend",toInsert);
-    //     });
-       
-    //     localStorage.setItem('data',this._rows)
-        
-    //     //console.log(this._rows.sort(dynamicSortMultiple("author","id")))
-    // }
-
-    getButtons(){
-        return ` <button type="button" class="sort" data-order="1">Sort 1</button><button type="button" class="sort" data-order="-1">Sort -1</button><button type="button" class="filter">Filter</button><input type="text" class="search" hidden/>`
     }
 
     loadData() {
@@ -404,18 +382,22 @@ class TableList extends HTMLElement{
         })
         
     }
+
+    
+
     listenEvents(){
-        const buttonSort = this.shadow.querySelectorAll(".sort")
+
         const buttonFilter = this.shadow.querySelectorAll(".filter")
         const inputFilter = this.shadow.querySelectorAll(".search")
-        buttonSort.forEach((btn: HTMLElement) => {
-            btn.addEventListener("click", this.handleSort.bind(this))
-        });
+        const headers = this.shadow.querySelectorAll(".sortable")
         buttonFilter.forEach((btn: HTMLElement) => {
             btn.addEventListener("click", this.handleFilter.bind(this))
         })
         inputFilter.forEach((btn: HTMLElement) => {
             btn.addEventListener("input", this.handleSearch.bind(this))
+        })
+        headers.forEach((header: HTMLElement) => {
+            header.addEventListener("click", this.handleSorting.bind(this))
         })
     }
 
@@ -432,37 +414,7 @@ class TableList extends HTMLElement{
             this.loadData()
             
 
-        }
-        
-    //   this._items.forEach((item,idx) => {
-    //       var row = Object()
-    //       row["id"] = idx;
-    //       var i = 0
-    //       for(const [key,value] of Object.entries(item)) {
-    //         if(!this.isInColumns(key)){
-    //             this._columns.push(key);
-    //         }
-    //         row[key] = value;
-    //         i++
-    //       }
-    //       this._rows.push(row);
-    //   });
-    //   this._tableHead.innerHTML = ""
-
-    //     var header = `<tr>`;
-    //     this._columns.forEach((item) => {
-    //     header += `<th data-key="${item}">${item} ${this.getButtons()}</th>`
-    //     });
-    //     header += `</tr>`;
-    //     this._tableHead.insertAdjacentHTML("beforeend",header);
-
-    //     this._sortButton = this._shadow.querySelectorAll(".sort");
-    //     this._filterButton = this._shadow.querySelectorAll(".filter");
-    //     this._filterInput = this._shadow.querySelectorAll(".search");
-    //     console.log(this._sortButton)
-    //   this.update()
-
-      
+        }      
     }
 }
 customElements.define("il-table", TableList);
