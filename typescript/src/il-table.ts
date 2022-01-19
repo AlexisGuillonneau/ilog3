@@ -224,27 +224,25 @@ class TableList extends HTMLElement{
     }
 
     handleSearch(evt: Event) {
-            evt.preventDefault();
-            console.log('search')
-        //     let elt = evt.target as HTMLInputElement
-        //     var value = elt.value.trim();
-        //     let parentNode = elt.parentElement
-        //     var key = parentNode!.getAttribute("data-key")
-        //     let inputs = this.querySelector('thead')!.querySelectorAll("input")
-        //     inputs.forEach(input => {
-        //         let dataKey = input!.parentElement!.getAttribute("data-key")
-        //         if (dataKey != parentNode!.getAttribute("data-key")) {
-        //             this._filters[dataKey!] = ""
-        //             input.value =""; 
-        //             input.setAttribute("hidden","true");
-        //         }
-                    
-        //     })
-        //     this._filters[key!] = value
-        //     this.querySelector("tbody")!.querySelectorAll(`td[data-header="${key}"]`).forEach(td => {td!.lastElementChild!.textContent!.toLowerCase().includes(value.toLowerCase()) ? td!.parentElement!.removeAttribute("hidden") : td.parentElement!.setAttribute("hidden","true")})
-        
-
-        // this.refreshCacheValues()
+            //evt.preventDefault();
+            let elt = evt.target as HTMLInputElement
+            let value = elt.value.trim()
+            let parentElement = elt.parentElement
+            let key = parentElement!.getAttribute("data-key")
+            let tableHead: HTMLElement = this.shadow.querySelector('thead')
+            let inputs = tableHead.querySelectorAll('input')
+            inputs.forEach((input) => {
+                let dataKey = input.parentElement!.getAttribute("data-key")
+                if (dataKey != parentElement!.getAttribute("data-key")) {
+                    input.value = ""
+                    input.setAttribute("hidden","true")
+                }
+            })
+            let tableBody: HTMLElement = this.shadow.querySelector("tbody")
+            let tableData = tableBody.querySelectorAll(`td[data-header="${key}"]`)
+            tableData.forEach((td) => {
+                td.lastElementChild!.textContent!.toLowerCase().includes(value.toLowerCase()) ? td.parentElement!.removeAttribute("hidden") : td.parentElement!.setAttribute("hidden", "true")
+            })
     }
 
     dynamicSort = (property: string) => {
@@ -260,18 +258,13 @@ class TableList extends HTMLElement{
     }
 
     handleSort = (evt: Event) => {
-        console.log('sorting')
-        console.log(this.data)
         let elt = evt.target as HTMLInputElement
         let parentElement = elt.parentElement
         if(parentElement != null){
             let key = parentElement.getAttribute("data-key")
-            let order = parentElement.getAttribute("data-order")
+            let order = elt.getAttribute("data-order")
             let sortedData = [...this.data]
-            console.log(sortedData)
-            sortedData.sort(this.dynamicSort("-title"))
-            console.log(sortedData)
-            console.log(this.data)
+            order == "-1" ? sortedData.sort(this.dynamicSort("-"+key)) : sortedData.sort(this.dynamicSort(key?key:""))
             const table = this.shadow.querySelector("table")!
             const tbody = table.tBodies[0]
             let i = 0
@@ -280,44 +273,30 @@ class TableList extends HTMLElement{
                 i++;
             })
         }
-
-        
-
-        // let elt = evt.target as HTMLInputElement
-        // let parentNode = elt.parentElement
-        // var key = parentNode!.getAttribute("data-key")
-        // var order = parentNode!.getAttribute("data-order")
-        // this._sorts[key!] = order
-        // //order == "-1" ? this._rows.sort(dynamicSort("-"+key)) : this._rows.sort(dynamicSort(key))
-        // this.update()
-        // this.refreshCacheValues()
-        
     }
 
     handleFilter = (evt: Event) => {
         let elt = evt.target as HTMLElement
         console.log('filter')
-        // let tableHead: HTMLElement | null = this.querySelector('thead')
-        // let inputs = tableHead!.querySelectorAll('input')
-        // tableHead!.querySelectorAll("input").forEach(input => {
-        //     let dataKey = input!.parentElement!.getAttribute('data-key')
-        //     if (dataKey != elt!.parentElement!.getAttribute("data-key")) {
-        //         this._filters[dataKey!] = ""
-        //         input.value =""; 
-        //         input.setAttribute("hidden","true");
-        //     }      
-        // })
-        // let lastChild = elt!.parentElement!.lastElementChild
-        // if(lastChild!.getAttribute("hidden") != null){
-        //     lastChild!.removeAttribute("hidden")
-        // }
-        // else{
-        //     lastChild!.setAttribute("hidden","true")
-        //     let dataKey = elt.parentElement!.getAttribute("data-key")
-        //     this._filters[dataKey!] = ""
-        //     this.update()
-        // }
-        // this.refreshCacheValues()
+        let tableHead: HTMLElement = this.shadow.querySelector('thead')
+        let inputs = tableHead.querySelectorAll('input')
+        inputs.forEach((input) => {
+            let dataKey = input.parentElement!.getAttribute('data-key')
+            if(dataKey != elt.parentElement!.getAttribute("data-key")) {
+                input.value = ""
+                input.setAttribute("hidden","true")
+            }
+        })
+        let tableBody: HTMLElement = this.shadow.querySelector("tbody")
+        let tableRow = tableBody.querySelectorAll(`tr[hidden="true"]`)
+        tableRow.forEach((tr) => tr.removeAttribute("hidden"))
+        let lastElementChild = elt.parentElement!.lastElementChild
+        if (lastElementChild!.getAttribute("hidden") != null) {
+            lastElementChild!.removeAttribute("hidden")
+        }
+        else {
+            lastElementChild!.setAttribute("hidden","true")
+        }
     }
 
     isInColumns(column: string) {
@@ -351,7 +330,7 @@ class TableList extends HTMLElement{
         }
         const props = this.getProps()
         const line = tplLine(props,data)
-        console.log(line)
+     
         tbody.insertAdjacentHTML("beforeend", line)
     }
 
@@ -436,7 +415,7 @@ class TableList extends HTMLElement{
             btn.addEventListener("click", this.handleFilter.bind(this))
         })
         inputFilter.forEach((btn: HTMLElement) => {
-            btn.addEventListener("keydown", this.handleSearch.bind(this))
+            btn.addEventListener("input", this.handleSearch.bind(this))
         })
     }
 
