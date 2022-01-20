@@ -9,8 +9,9 @@ table {
     
 }
 thead {
-    background-color: #4da6ff;
-    font-size: 20px;
+    font-size: var(--font-size-title, 20px);
+    background-color: var(--background-title-color, #4da6ff);
+    color: var(--font-color-title, black);
 }
 td, tr {
     border-style: solid;
@@ -86,7 +87,7 @@ const getLibBadge = (type) => {
     return type;
 };
 const concat = (res, str) => res + str;
-const tplFilters = () => ` <button type="button" class="filter">Filter</button><input type="text" class="search" hidden/>`;
+const tplFilters = () => ` <button type="button" class="filter">Filter</button><input type="text" class="search" placeholder="  Type to Search..." hidden/>`;
 const tplOrder = (order, cartet) => `<span data-order="${order}">${cartet}</span>`;
 const tplCell = (data, column) => `<td data-header="${column}" data-type="${typeof data}">
     <span class="badge ${typeof data}">${getLibBadge(typeof data)}</span><span>${data}</span>

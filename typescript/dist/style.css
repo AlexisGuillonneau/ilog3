@@ -1,0 +1,30 @@
+/*Guide de styling
+Pour modifier le style dé-commenter la ligne. Sinon, la valeur par défaut sera utilisé.
+*/
+
+il-table{
+  /*Taille de l'ecriture du titre (val def 20px):*/
+  /*--font-size-title : ;*/
+  /*Couleur de l'écriture (noir par défaut)*/
+  --font-color-title: white;
+  /*Couleur de fond du titre (#4da6ff par défaut )*/
+  --background-title-color : red;
+  /*Style de la bordure des cellules (solid par défaut)*/
+  /*--cell-border-style*/
+  /*Couleur de la bordure des cellules (noir par défaut)*/
+  /*--cell-border-color*/
+  /*Epaisseur de la bordure des cellules (2px par défaut)*/
+  /*--cell-border-width*/
+  /*Couleur de la ligne sur deux (#f2f2f2 par défaut)*/
+  /*--color-switch-line*/
+  /*Couleur de fond du bouton de recherche ( gris par défaut)*/
+  /*--search-background-color*/
+  /*Couleur de la ligne lors du passage de la souris*/
+  /*--mouse-over-cell-color*/
+  /**/
+  /**/
+  /**/
+  /**/
+  
+
+}
