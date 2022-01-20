@@ -1,4 +1,5 @@
 "use strict";
+/* *********************************** Typing **************************************** */
 let css = document.createElement("template");
 css.innerHTML = `
 <style>
@@ -99,7 +100,7 @@ ${props.keys.map(key => tplCell(data.row[key], key)).reduce(concat)}
 const tplHeader = (props) => {
     let header = "";
     for (let i = 0; i < props.keys.length; i++) {
-        header += `<td data-key="${props.keys[i]}"><span class="sortable">${props.headers[i]} <span data-order="0">▶</span></span>${tplFilters()}</td>`;
+        header += `<th data-key="${props.keys[i]}"><span class="sortable">${props.headers[i]} <span data-order="0">▶</span></span>${tplFilters()}</th>`;
     }
     return header;
 };
@@ -158,14 +159,17 @@ class TableList extends HTMLElement {
                 case "0":
                     elt.insertAdjacentHTML("beforeend", tplOrder("1", "▲"));
                     sortedData.sort(this.dynamicSort(key ? key : ""));
+                    this.setSortCache({ key: key, order: "1" });
                     break;
                 case "-1":
                     elt.insertAdjacentHTML("beforeend", tplOrder("0", "▶"));
                     sortedData = this.data;
+                    this.setSortCache({ key: key, order: "0" });
                     break;
                 case "1":
                     elt.insertAdjacentHTML("beforeend", tplOrder("-1", "▼"));
                     sortedData.sort(this.dynamicSort("-" + key));
+                    this.setSortCache({ key: key, order: "-1" });
                     break;
             }
             const table = this.shadow.querySelector("table");
@@ -215,22 +219,51 @@ class TableList extends HTMLElement {
         //     btn.removeEventListener("keydown", this.handleSearch)
         // })
     }
-    refreshCacheValues() {
-        // localStorage.setItem('filter', JSON.stringify(this._filters))
-        // localStorage.setItem('sort', JSON.stringify(this._sorts))
+    getSortCache() {
+        let cache = localStorage.getItem('sort');
+        if (cache) {
+            let json = JSON.parse(cache);
+            return json;
+        }
+        else {
+            return { key: "", order: "" };
+        }
+    }
+    setSortCache(sortCache) {
+        localStorage.setItem('sort', JSON.stringify(sortCache));
+    }
+    getFilterCache() {
+        let cache = localStorage.getItem("filter");
+        if (cache) {
+            let json = JSON.parse(cache);
+            return json;
+        }
+        else {
+            return { key: "", value: "" };
+        }
+    }
+    setFilterCache(filterCache) {
+        localStorage.setItem("filter", JSON.stringify(filterCache));
     }
     loadCacheValues() {
-        let filter, sort;
-        if (filter = localStorage.getItem('filter')) {
-            filter = JSON.parse(filter);
-            console.log(filter);
+        console.log("in");
+        let filter = this.getFilterCache();
+        let sort = this.getSortCache();
+        if (sort.key != "") {
+            let element = this.shadow.querySelector(`th[data-key="${sort.key}"]  > .sortable`);
+            if (sort.order == "1")
+                element.dispatchEvent(new Event("click", { 'bubbles': true }));
+            else if (sort.order == "-1") {
+                element.dispatchEvent(new Event("click", { 'bubbles': true }));
+                element.dispatchEvent(new Event("click", { 'bubbles': true }));
+            }
         }
-        if (sort = localStorage.getItem('sort')) {
-            sort = JSON.parse(sort);
+        if (filter.key != "") {
+            let element = this.shadow.querySelector(`th[data-key="${filter.key}"] > input`);
+            element.setAttribute("hidden", true);
+            element.value = filter.value;
+            element.dispatchEvent(new Event("input", { 'bubbles': true }));
         }
-        let element = this.querySelector('th[data-key="author"]  > button[data-order="-1"]');
-        this.querySelector('th[data-key="author"]  > button[data-order="-1"]').dispatchEvent(new Event("click", { 'bubbles': true }));
-        //element.dispatchEvent(new Event("click"))
     }
     handleSearch(evt) {
         //evt.preventDefault();
@@ -306,6 +339,7 @@ class TableList extends HTMLElement {
                 i++;
             }
             this.listenEvents();
+            this.loadCacheValues();
         })
             .catch((reason) => {
             console.error(reason);
