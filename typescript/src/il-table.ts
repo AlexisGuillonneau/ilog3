@@ -30,28 +30,28 @@ css.innerHTML  = `
 table {
     font-family: Arial, Helvetica, sans-serif;
     border-collapse: collapse;
-    width: 100%;
     
 }
 thead {
-    background-color: #4da6ff;
-    font-size: 20px;
+    font-size: var(--font-size-title, 20px);
+    background-color: var(--background-title-color, #4da6ff);
+    color: var(--font-color-title, black);
 }
 td, tr {
-    border-style: solid;
-    border-color: black;
-    border-width: 2px;
+    border-style: var(--cell-border-style, solid);
+    border-color: var(--cell-border-color, black);
+    border-width: var(--cell-border-width, 2px);
 }
-tr:nth-child(even){background-color: #f2f2f2;}
+tr:nth-child(even){background-color: var(--color-switch-line, #f2f2f2);}
 .filter{
-    background-color: grey;
+    background-color: var(--search-background-color, grey);
     border-radius: 25px;
 }
 .search{
     border-radius: 25px;
     border-width: 1px;
 }
-tbody>tr:hover {background-color: #ccc;}
+tbody>tr:hover {background-color: var(--mouse-over-cell-color, #ccc);}
 .badge {
     display: inline-block;
     min-width: 1.5em; /* em unit */
@@ -115,7 +115,7 @@ const getLibBadge = (type: string) => {
 
 const concat = (res: string, str: string) => res + str
 
-const tplFilters = (): string => ` <button type="button" class="filter">Filter</button><input type="text" class="search" hidden/>`
+const tplFilters = (): string => ` <button type="button" class="filter">Filter</button><input type="text" class="search" placeholder="  Type to Search..." hidden/>`
 
 const tplOrder = (order: string, caret: string) => `<span data-order="${order}">${caret}</span>`
 
