@@ -6,7 +6,6 @@ css.innerHTML = `
 table {
     font-family: Arial, Helvetica, sans-serif;
     border-collapse: collapse;
-    width: 100%;
     
 }
 thead {
@@ -15,20 +14,20 @@ thead {
     color: var(--font-color-title, black);
 }
 td, tr {
-    border-style: solid;
-    border-color: black;
-    border-width: 2px;
+    border-style: var(--cell-border-style, solid);
+    border-color: var(--cell-border-color, black);
+    border-width: var(--cell-border-width, 2px);
 }
-tr:nth-child(even){background-color: #f2f2f2;}
+tr:nth-child(even){background-color: var(--color-switch-line, #f2f2f2);}
 .filter{
-    background-color: grey;
+    background-color: var(--search-background-color, grey);
     border-radius: 25px;
 }
 .search{
     border-radius: 25px;
     border-width: 1px;
 }
-tbody>tr:hover {background-color: #ccc;}
+tbody>tr:hover {background-color: var(--mouse-over-cell-color, #ccc);}
 .badge {
     display: inline-block;
     min-width: 1.5em; /* em unit */
@@ -89,7 +88,7 @@ const getLibBadge = (type) => {
 };
 const concat = (res, str) => res + str;
 const tplFilters = () => ` <button type="button" class="filter">Filter</button><input type="text" class="search" placeholder="  Type to Search..." hidden/>`;
-const tplOrder = (order, cartet) => `<span data-order="${order}">${cartet}</span>`;
+const tplOrder = (order, caret) => `<span data-order="${order}">${caret}</span>`;
 const tplCell = (data, column) => `<td data-header="${column}" data-type="${typeof data}">
     <span class="badge ${typeof data}">${getLibBadge(typeof data)}</span><span>${data}</span>
     </td>`;
@@ -259,8 +258,10 @@ class TableList extends HTMLElement {
             }
         }
         if (filter.key != "") {
+            let button = this.shadow.querySelector(`th[data-key="${filter.key}"] > button`);
+            button.dispatchEvent(new Event("click", { 'bubbles': true }));
             let element = this.shadow.querySelector(`th[data-key="${filter.key}"] > input`);
-            element.setAttribute("hidden", true);
+            element.removeAttribute("hidden");
             element.value = filter.value;
             element.dispatchEvent(new Event("input", { 'bubbles': true }));
         }
@@ -271,6 +272,7 @@ class TableList extends HTMLElement {
         let value = elt.value.trim();
         let parentElement = elt.parentElement;
         let key = parentElement.getAttribute("data-key");
+        this.setFilterCache({ key: key, value: value });
         this.restoreDefaultSorting(undefined, parentElement);
         let tableBody = this.shadow.querySelector("tbody");
         let tableData = tableBody.querySelectorAll(`td[data-header="${key}"]`);

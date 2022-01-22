@@ -228,8 +228,10 @@ class TableList extends HTMLElement{
             }
         }
         if(filter.key != "") {
+            let button = this.shadow.querySelector(`th[data-key="${filter.key}"] > button`)
+            button.dispatchEvent(new Event("click", {'bubbles': true}))
             let element = this.shadow.querySelector(`th[data-key="${filter.key}"] > input`)
-            element.setAttribute("hidden", true)
+            element.removeAttribute("hidden")
             element.value = filter.value
             element.dispatchEvent(new Event("input", {'bubbles': true}))
         }
@@ -245,6 +247,7 @@ class TableList extends HTMLElement{
             let value = elt.value.trim()
             let parentElement = elt.parentElement
             let key = parentElement!.getAttribute("data-key")
+            this.setFilterCache({key: key!, value: value})
             this.restoreDefaultSorting(undefined,parentElement!)
             let tableBody: HTMLElement = this.shadow.querySelector("tbody")
             let tableData = tableBody.querySelectorAll(`td[data-header="${key}"]`)
