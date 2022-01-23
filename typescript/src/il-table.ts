@@ -151,6 +151,11 @@ class TableList extends HTMLElement{
 
     attributeChangedCallback(namAttr: string, valOld: string, valNew: string) {
         console.log(`attribute ${namAttr} changes from ${valOld} to ${valNew}`)
+        switch(namAttr) {
+            case 'icons':
+                this.updateIcons(valNew)
+                break
+        }
     }
 
     disconnectedCallback() {
@@ -166,6 +171,18 @@ class TableList extends HTMLElement{
         headers.forEach((header: HTMLElement) => {
             header.removeEventListener("click", this.handleSorting.bind(this))
         })  
+    }
+
+    updateIcons(valNew: string) {
+        const jsoIcons = JSON.parse(valNew)
+        Object.keys(jsoIcons).forEach(key => {
+            let thead = this.shadow.querySelector(`th[data-key="${key}"]`)
+            if (thead != null) {
+                let icon = thead.querySelector("i")
+                icon.remove()
+                thead.insertAdjacentHTML("afterbegin",tplIcon(jsoIcons[key]))
+            }
+        })   
     }
 
     getSortCache(): ISort {

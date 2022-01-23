@@ -187,17 +187,38 @@ class TableList extends HTMLElement {
     }
     attributeChangedCallback(namAttr, valOld, valNew) {
         console.log(`attribute ${namAttr} changes from ${valOld} to ${valNew}`);
+        switch (namAttr) {
+            case 'icons':
+                this.updateIcons(valNew);
+                break;
+        }
     }
     disconnectedCallback() {
-        // _sortButton.forEach((btn) => {
-        //     btn.removeEventListener("click", this.handleSort);
-        // })
-        // _filterButton.forEach((btn) => {
-        //     btn.removeEventListener("click", this.handleFilter)
-        // })
-        // _filterInput.forEach((btn) => {
-        //     btn.removeEventListener("keydown", this.handleSearch)
-        // })
+        const buttonFilter = this.shadow.querySelectorAll(".filter");
+        const inputFilter = this.shadow.querySelectorAll(".search");
+        const headers = this.shadow.querySelectorAll(".sortable");
+        buttonFilter.forEach((btn) => {
+            btn.removeEventListener("click", this.handleFilter.bind(this));
+        });
+        inputFilter.forEach((btn) => {
+            btn.removeEventListener("input", this.handleSearch.bind(this));
+        });
+        headers.forEach((header) => {
+            header.removeEventListener("click", this.handleSorting.bind(this));
+        });
+    }
+    updateIcons(valNew) {
+        const jsoIcons = JSON.parse(valNew);
+        console.log(jsoIcons);
+        Object.keys(jsoIcons).forEach(key => {
+            let thead = this.shadow.querySelector(`th[data-key="${key}"]`);
+            if (thead != null) {
+                console.log(thead);
+                let icon = thead.querySelector("i");
+                icon.remove();
+                thead.insertAdjacentHTML("afterbegin", tplIcon(jsoIcons[key]));
+            }
+        });
     }
     getSortCache() {
         let cache = localStorage.getItem('sort');
