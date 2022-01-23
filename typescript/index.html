@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Il Table</title>
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
     <link rel="stylesheet" href="/dist/style.css">
   </head>
   <body>
     <script src="/dist/il-table.js" defer></script>
     <div class="wrapper">
-        <il-table src="http://127.0.0.1:8080/books.json" columns='{ "title" : "Titre", "author" : "Auteur"}'>
+        <il-table src="http://127.0.0.1:8080/books.json" columns='{ "title" : "Titre", "author" : "Auteur"}' icons='{ "title" : "fa fa-book", "author" : "fa fa-user"}'>
         </il-table>    
     </div>
   </body>

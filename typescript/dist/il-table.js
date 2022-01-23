@@ -1,7 +1,8 @@
 "use strict";
 /* *********************************** Typing **************************************** */
-let css = document.createElement("template");
-css.innerHTML = `
+let template = document.createElement("template");
+template.innerHTML = `
+<link href="/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 <style>
 table {
     font-family: Arial, Helvetica, sans-serif;
@@ -66,31 +67,11 @@ tbody>tr:hover {background-color: var(--mouse-over-cell-color, #ccc);}
 }
 </style>
 `;
-const getLibBadge = (type) => {
-    switch (type) {
-        case 'string':
-            type = "a-Z";
-            break;
-        case 'number':
-            type = "0-9";
-            break;
-        case 'undefined':
-            type = "NaN";
-            break;
-        case 'object':
-            type = "{ }";
-            break;
-        case 'boolean':
-            type = " ";
-            break;
-    }
-    return type;
-};
 const concat = (res, str) => res + str;
+const tplIcon = (icon) => `<i class="${icon}"></i>`;
 const tplFilters = () => ` <button type="button" class="filter">Filter</button><input type="text" class="search" placeholder="  Type to Search..." hidden/>`;
 const tplOrder = (order, caret) => `<span data-order="${order}">${caret}</span>`;
-const tplCell = (data, column) => `<td data-header="${column}" data-type="${typeof data}">
-    <span class="badge ${typeof data}">${getLibBadge(typeof data)}</span><span>${data}</span>
+const tplCell = (data, column) => `<td data-header="${column}"><span>${data}</span>
     </td>`;
 const tplLine = (props, data) => `<tr id="tr_${data.id}">
 ${props.keys.map(key => tplCell(data.row[key], key)).reduce(concat)}
@@ -99,7 +80,7 @@ ${props.keys.map(key => tplCell(data.row[key], key)).reduce(concat)}
 const tplHeader = (props) => {
     let header = "";
     for (let i = 0; i < props.keys.length; i++) {
-        header += `<th data-key="${props.keys[i]}"><span class="sortable">${props.headers[i]} <span data-order="0">▶</span></span>${tplFilters()}</th>`;
+        header += `<th data-key="${props.keys[i]}">${tplIcon(props.icons[i])} <span class="sortable">${props.headers[i]} <span data-order="0">▶</span></span>${tplFilters()}</th>`;
     }
     return header;
 };
@@ -195,14 +176,14 @@ class TableList extends HTMLElement {
             }
         };
         this.shadow = this.attachShadow({ mode: "open" });
-        this.shadow.appendChild(css.content.cloneNode(true));
+        this.shadow.appendChild(template.content.cloneNode(true));
         //_shadow.appendChild(template.content.cloneNode(true))
     }
     connectedCallback() {
         this.initTable();
     }
     static get observedAttributes() {
-        return ["src", "columns"];
+        return ["src", "columns", "icons"];
     }
     attributeChangedCallback(namAttr, valOld, valNew) {
         console.log(`attribute ${namAttr} changes from ${valOld} to ${valNew}`);
@@ -293,11 +274,21 @@ class TableList extends HTMLElement {
         const attr = (_a = this.getAttribute("src")) !== null && _a !== void 0 ? _a : "";
         return attr;
     }
+    set icons(valNew) {
+        this.setAttribute("icons", valNew);
+    }
+    get icons() {
+        var _a;
+        const attr = (_a = this.getAttribute("icons")) !== null && _a !== void 0 ? _a : "";
+        return attr;
+    }
     getProps() {
         const jsoColumns = JSON.parse(this.columns);
+        const jsoIcons = JSON.parse(this.icons);
         return {
             headers: Object.values(jsoColumns),
-            keys: Object.keys(jsoColumns)
+            keys: Object.keys(jsoColumns),
+            icons: Object.values(jsoIcons)
         };
     }
     appendRow(tbody, data) {
