@@ -80,7 +80,7 @@ ${props.keys.map(key => tplCell(data.row[key], key)).reduce(concat)}
 const tplHeader = (props) => {
     let header = "";
     for (let i = 0; i < props.keys.length; i++) {
-        header += `<th data-key="${props.keys[i]}">${tplIcon(props.icons[i])} <span class="sortable">${props.headers[i]} <span data-order="0">▶</span></span>${tplFilters()}</th>`;
+        header += `<th data-key="${props.keys[i]}">${props.icons ? tplIcon(props.icons[i]) : ""} <span class="sortable"><span class="il-table-header">${props.headers[i]}</span> <span data-order="0">▶</span></span>${tplFilters()}</th>`;
     }
     return header;
 };
@@ -190,8 +190,11 @@ class TableList extends HTMLElement {
             case 'icons':
                 this.updateIcons(valNew);
                 break;
-            default:
+            case 'src':
                 this.initTable();
+                break;
+            case 'columns':
+                this.updateColumns(valNew);
         }
     }
     disconnectedCallback() {
@@ -206,6 +209,16 @@ class TableList extends HTMLElement {
         });
         headers.forEach((header) => {
             header.removeEventListener("click", this.handleSorting.bind(this));
+        });
+    }
+    updateColumns(valNew) {
+        const jsoColumns = JSON.parse(valNew);
+        Object.keys(jsoColumns).forEach(key => {
+            let thead = this.shadow.querySelector(`th[data-key="${key}"] > .sortable > .il-table-header`);
+            console.log(this.shadow.querySelector(`th[data-key="${key}"] > sortable`));
+            if (thead != null) {
+                thead.innerHTML = jsoColumns[key];
+            }
         });
     }
     updateIcons(valNew) {
@@ -304,11 +317,11 @@ class TableList extends HTMLElement {
     }
     getProps() {
         const jsoColumns = JSON.parse(this.columns);
-        const jsoIcons = JSON.parse(this.icons);
+        const jsoIcons = this.icons == "" ? null : JSON.parse(this.icons);
         return {
             headers: Object.values(jsoColumns),
             keys: Object.keys(jsoColumns),
-            icons: Object.values(jsoIcons)
+            icons: jsoIcons ? Object.values(jsoIcons) : null
         };
     }
     appendRow(tbody, data) {
@@ -373,6 +386,7 @@ class TableList extends HTMLElement {
         });
     }
     initTable() {
+        console.log("called once");
         let table = this.shadow.querySelector("table");
         if (table != null) {
             table.remove();
