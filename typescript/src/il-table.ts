@@ -26,7 +26,7 @@ interface ISort {
 }
 
 let template = document.createElement("template");
-template.innerHTML  = `
+template.innerHTML = `
 <link href="/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 <style>
 table {
@@ -92,30 +92,69 @@ tbody>tr:hover {background-color: var(--mouse-over-cell-color, #ccc);}
 }
 </style>
 `
-
+/**
+ * Lambda function to concatenate string
+ * 
+ * @param  {string} res
+ * @param  {string} str
+ */
 const concat = (res: string, str: string) => res + str
-
-const tplIcon = (icon: string) : string => `<i class="${icon}"></i>`
-
+/**
+ * Generate the template of an icon
+ * 
+ * @param  {string} icon CSS class from font-awesome.css
+ * @returns string
+ */
+const tplIcon = (icon: string): string => `<i class="${icon}"></i>`
+/**
+ * Generate the template for the filter feature
+ * 
+ * @returns string
+ */
 const tplFilters = (): string => ` <button type="button" class="filter">Filter</button><input type="text" class="search" placeholder="  Type to Search..." hidden/>`
-
+/**
+ * Generate the template for the order caret
+ * 
+ * @param  {string} order 0: default, 1: a->z order, -1: z->a order
+ * @param  {string} caret Character caret to visualize the order
+ */
 const tplOrder = (order: string, caret: string) => `<span data-order="${order}">${caret}</span>`
-
+/**
+ * Generate the template for a table table
+ * 
+ * @param  {any} data
+ * @param  {string} column
+ */
 const tplCell = (data: any, column: string) => `<td data-header="${column}"><span>${data}</span>
     </td>`
-
+/**
+ * Generate the template for the table rows
+ * 
+ * @param  {IConfig} props
+ * @param  {IRow} data
+ */
 const tplLine = (props: IConfig, data: IRow) => `<tr id="tr_${data.id}">
 ${props.keys.map(key => tplCell(data.row[key], key)).reduce(concat)}
 </tr>
 `
+/**
+ * Generate the template for the table header
+ * 
+ * @param  {IConfig} props
+ * @returns string
+ */
 const tplHeader = (props: IConfig): string => {
     let header = ""
-    for(let i = 0; i< props.keys.length; i++){
+    for (let i = 0; i < props.keys.length; i++) {
         header += `<th data-key="${props.keys[i]}">${props.icons ? tplIcon(props.icons[i]) : ""} <span class="sortable"><span class="il-table-header">${props.headers[i]}</span> <span data-order="0">▶</span></span>${tplFilters()}</th>`
     }
     return header
 }
-
+/**
+ * Generate the template for the table
+ * 
+ * @param  {IConfig} props
+ */
 const tplTable = (props: IConfig) => `
     <thead>
         <tr>
@@ -125,33 +164,44 @@ const tplTable = (props: IConfig) => `
     <tbody>
     </tbody>`
 
-class TableList extends HTMLElement{
+class TableList extends HTMLElement {
 
     protected data: IRow[] = []
 
     protected shadow: any
-     
 
+    /**
+     * Constructor of TableList
+     */
     constructor() {
         super();
 
-        this.shadow = this.attachShadow({ mode: "open"});
+        this.shadow = this.attachShadow({ mode: "open" });
         this.shadow.appendChild(template.content.cloneNode(true))
-        //_shadow.appendChild(template.content.cloneNode(true))
 
     }
-
+    /**
+     * Lifecycle connected callback
+     */
     connectedCallback() {
-        
-    }
 
+    }
+    /**
+     * Setup observed attributes for the lifecycle attribute changed callback
+     */
     static get observedAttributes() {
         return ["src", "columns", "icons"]
     }
-
+    /**
+     * Lifecycle attribute changed callback
+     * 
+     * @param  {string} namAttr Attriubte name changed
+     * @param  {string} valOld Old value of the attribute
+     * @param  {string} valNew New value of the attribute
+     */
     attributeChangedCallback(namAttr: string, valOld: string, valNew: string) {
-        console.log(`attribute ${namAttr} changes from ${valOld} to ${valNew}`)
-        switch(namAttr) {
+        console.log(`Attribute ${namAttr} changes from ${valOld} to ${valNew}`)
+        switch (namAttr) {
             case 'icons':
                 this.updateIcons(valNew)
                 break
@@ -162,7 +212,9 @@ class TableList extends HTMLElement{
                 this.updateColumns(valNew)
         }
     }
-
+    /**
+     * Lifecycle disconnected callback, remove all event listener binded to the web component
+     */
     disconnectedCallback() {
         const buttonFilter = this.shadow.querySelectorAll(".filter")
         const inputFilter = this.shadow.querySelectorAll(".search")
@@ -175,211 +227,65 @@ class TableList extends HTMLElement{
         })
         headers.forEach((header: HTMLElement) => {
             header.removeEventListener("click", this.handleSorting.bind(this))
-        })  
-    }
-
-    updateColumns(valNew: string) {
-        const jsoColumns = JSON.parse(valNew)
-        Object.keys(jsoColumns).forEach(key => {
-            let thead = this.shadow.querySelector(`th[data-key="${key}"] > .sortable > .il-table-header`)
-            if (thead != null) {
-                thead.innerHTML = jsoColumns[key]
-            }
-        })  
-    }
-
-    updateIcons(valNew: string) {
-        const jsoIcons = JSON.parse(valNew)
-        Object.keys(jsoIcons).forEach(key => {
-            let thead = this.shadow.querySelector(`th[data-key="${key}"]`)
-            if (thead != null) {
-                let icon = thead.querySelector("i")
-                icon.remove()
-                thead.insertAdjacentHTML("afterbegin",tplIcon(jsoIcons[key]))
-            }
-        })   
-    }
-
-    getSortCache(): ISort {
-        let cache = localStorage.getItem('sort')
-        if(cache) {
-            let json = JSON.parse(cache)
-            return json
-        }else{
-            return {key:"",order:""}
-        }
-    }
-
-    setSortCache(sortCache: ISort){
-       localStorage.setItem('sort', JSON.stringify(sortCache))
-    }
-
-    getFilterCache(): IFilter {
-        let cache = localStorage.getItem("filter")
-        if(cache) {
-            let json = JSON.parse(cache)
-            return json
-        }else{
-            return {key:"",value:""}
-        }
-    }
-
-    setFilterCache(filterCache: IFilter) {
-        localStorage.setItem("filter", JSON.stringify(filterCache))
-    }
-
-    loadCacheValues() {
-        console.log("in");
-        let filter: IFilter = this.getFilterCache()
-        let sort: ISort = this.getSortCache()
-        if(sort.key != "") {
-            let element = this.shadow.querySelector(`th[data-key="${sort.key}"]  > .sortable`)
-            if(sort.order == "1")
-                element.dispatchEvent(new Event("click", { 'bubbles': true }))
-            else if(sort.order == "-1"){
-                element.dispatchEvent(new Event("click", { 'bubbles': true }))
-                element.dispatchEvent(new Event("click", { 'bubbles': true }))
-            }
-        }
-        if(filter.key != "") {
-            let button = this.shadow.querySelector(`th[data-key="${filter.key}"] > button`)
-            button.dispatchEvent(new Event("click", {'bubbles': true}))
-            let element = this.shadow.querySelector(`th[data-key="${filter.key}"] > input`)
-            element.removeAttribute("hidden")
-            element.value = filter.value
-            element.dispatchEvent(new Event("input", {'bubbles': true}))
-        }
-        
-        
-        
-        
-    }
-
-    handleSearch(evt: Event) {
-            //evt.preventDefault();
-            let elt = evt.target as HTMLInputElement
-            let value = elt.value.trim()
-            let parentElement = elt.parentElement
-            let key = parentElement!.getAttribute("data-key")
-            this.setFilterCache({key: key!, value: value})
-            this.restoreDefaultSorting(undefined,parentElement!)
-            let tableBody: HTMLElement = this.shadow.querySelector("tbody")
-            let tableData = tableBody.querySelectorAll(`td[data-header="${key}"]`)
-            tableData.forEach((td) => {
-                td.lastElementChild!.textContent!.toLowerCase().includes(value.toLowerCase()) ? td.parentElement!.removeAttribute("hidden") : td.parentElement!.setAttribute("hidden", "true")
-            })
-    }
-
-    dynamicSort = (property: string) => {
-        var sortOrder = 1;
-        if(property[0] === "-") {
-            sortOrder = -1;
-            property = property.substr(1);
-        }
-        return function (a: any,b: any) {
-            var result = (a[property] < b[property]) ? -1 : (a[property] > b[property]) ? 1 : 0;
-            return result * sortOrder;
-        }
-    }
-
-    restoreDefaultSorting = (sortElementToPrevent?: HTMLElement, filterElementToPrevent?: HTMLElement) => {
-        let tableHead: HTMLElement = this.shadow.querySelector('thead')
-        let inputs = tableHead.querySelectorAll('input')
-        inputs.forEach((input) => {
-            let dataKey = input.parentElement!.getAttribute("data-key")
-            if (dataKey != filterElementToPrevent?.getAttribute("data-key")) {
-                input.value = ""
-            input.setAttribute("hidden","true")
-            }
-            
-        })
-        let sortElements = tableHead.querySelectorAll(".sortable")
-        sortElements.forEach((elt) => {
-            if(elt != sortElementToPrevent) {
-                let orderElement = elt.lastElementChild
-                orderElement!.remove()
-                elt.insertAdjacentHTML("beforeend",tplOrder("0","▶"))
-            }
-            
         })
     }
-
-    handleSorting = (evt: MouseEvent) => {
-        let elt = evt.currentTarget as HTMLElement
-        let parentElement = elt.parentElement
-        let key = parentElement!.getAttribute("data-key")
-        let orderElement = elt.lastElementChild
-        let order = orderElement!.getAttribute("data-order")
-        orderElement!.remove()
-        this.restoreDefaultSorting(elt, undefined)
-        let sortedData = [...this.data]
-        switch(order) {
-            case "0":
-                elt.insertAdjacentHTML("beforeend",tplOrder("1","▲"))
-                sortedData.sort(this.dynamicSort(key?key:""))
-                this.setSortCache({key: key!, order: "1"})
-                break
-            case "-1":
-                elt.insertAdjacentHTML("beforeend",tplOrder("0","▶"))
-                sortedData = this.data
-                this.setSortCache({key: key!, order: "0"})
-                break
-            case "1":
-                elt.insertAdjacentHTML("beforeend",tplOrder("-1","▼"))
-                sortedData.sort(this.dynamicSort("-"+key))
-                this.setSortCache({key: key!, order: "-1"})
-                break
-        }
-        const table = this.shadow.querySelector("table")!
-        const tbody = table.tBodies[0]
-        let i = 0
-        sortedData.forEach((row) => {
-            this.appendRow(tbody,{id:i,row:row})
-            i++;
-        })
-
+    /**
+     * Setter function for columns attribute
+     * 
+     * @param  {string} valNew New value for the attribute
+     */
+     set columns(valNew: string) {
+        this.setAttribute("columns", valNew)
     }
 
-    handleFilter = (evt: Event) => {
-        let elt = evt.target as HTMLElement
-        console.log('filter')
-        this.restoreDefaultSorting(undefined,elt.parentElement!)    
-        let tableBody: HTMLElement = this.shadow.querySelector("tbody")
-        let tableRow = tableBody.querySelectorAll(`tr[hidden="true"]`)
-        tableRow.forEach((tr) => tr.removeAttribute("hidden"))
-        let lastElementChild = elt.parentElement!.lastElementChild
-        if (lastElementChild!.getAttribute("hidden") != null) {
-            lastElementChild!.removeAttribute("hidden")
-        }
-        else {
-            lastElementChild!.setAttribute("hidden","true")
-        }
-    }
-
-    set columns(valNew: string) {
-        this.setAttribute("columns",valNew)
-    }
-    
-
+    /**
+     * Getter function for columns attribute
+     * 
+     * @returns string JSON string contained in the attribute
+     */
     get columns(): string {
         const attr = this.getAttribute("columns") ?? '{"key0" : "Header0", "key1", "Header1"}'
         return attr
     }
-
+    /**
+     * Setter function for src attribute
+     * 
+     * @param  {string} valNew New value for the attribute
+     */
+    set src(valNew: string) {
+        this.setAttribute("src", valNew)
+    }
+    /**
+     * Getter function for src attribute
+     * 
+     * @returns string JSON string contained in the attribute
+     */
     get src(): string {
         const attr = this.getAttribute("src") ?? ""
         return attr
     }
-
+    /**
+     * Setter function for icons attribute
+     * 
+     * @param  {string} valNew New value for the attribute
+     */
     set icons(valNew: string) {
         this.setAttribute("icons", valNew)
     }
-
+    /**
+     * Getter function for icons attribute
+     * 
+     * @returns string JSON object containing the icons class from font-awesome
+     */
     get icons(): string {
         const attr = this.getAttribute("icons") ?? ""
         return attr
     }
-
+    /**
+     * 
+     * 
+     * @returns IConfig Component configuration from attributes
+     */
     getProps(): IConfig {
         const jsoColumns = JSON.parse(this.columns)
         const jsoIcons = this.icons == "" ? null : JSON.parse(this.icons)
@@ -389,64 +295,296 @@ class TableList extends HTMLElement{
             icons: jsoIcons ? Object.values(jsoIcons) : null
         }
     }
+    /**
+     * Allow the update of the columns header
+     * 
+     * @param  {string} valNew New value for the attribute
+     */
+    updateColumns(valNew: string) {
+        const jsoColumns = JSON.parse(valNew)
+        Object.keys(jsoColumns).forEach(key => {
+            let thead = this.shadow.querySelector(`th[data-key="${key}"] > .sortable > .il-table-header`)
+            if (thead != null) {
+                thead.innerHTML = jsoColumns[key]
+            }
+        })
+    }
+    /**
+     * Allow the update of the icons
+     * 
+     * @param  {string} valNew New value for the attribute
+     */
+    updateIcons(valNew: string) {
+        const jsoIcons = JSON.parse(valNew)
+        Object.keys(jsoIcons).forEach(key => {
+            let thead = this.shadow.querySelector(`th[data-key="${key}"]`)
+            if (thead != null) {
+                let icon = thead.querySelector("i")
+                icon.remove()
+                thead.insertAdjacentHTML("afterbegin", tplIcon(jsoIcons[key]))
+            }
+        })
+    }
+    /**
+     * Return the last sorting indicator stored in the local cache
+     * 
+     * @returns ISort 
+     */
+    getSortCache(): ISort {
+        let cache = localStorage.getItem('sort')
+        if (cache) {
+            let json = JSON.parse(cache)
+            return json
+        } else {
+            return { key: "", order: "" }
+        }
+    }
+    /**
+     * Store the value of the current sorting indicator in the local cache
+     * 
+     * @param  {ISort} sortCache
+     */
+    setSortCache(sortCache: ISort) {
+        localStorage.setItem('sort', JSON.stringify(sortCache))
+    }
+    /**
+     * Return the last filtering indicator stored in the local cache
+     * 
+     * @returns IFilter
+     */
+    getFilterCache(): IFilter {
+        let cache = localStorage.getItem("filter")
+        if (cache) {
+            let json = JSON.parse(cache)
+            return json
+        } else {
+            return { key: "", value: "" }
+        }
+    }
+    /**
+     * Store the current filtering indicator in the local cache
+     * 
+     * @param  {IFilter} filterCache
+     */
+    setFilterCache(filterCache: IFilter) {
+        localStorage.setItem("filter", JSON.stringify(filterCache))
+    }
+    /**
+     * Search for sorting or filtering indicator in the local cache and trigger event to match these indicator
+     */
+    loadCacheValues() {
+        let filter: IFilter = this.getFilterCache()
+        let sort: ISort = this.getSortCache()
+        if (sort.key != "") {
+            let element = this.shadow.querySelector(`th[data-key="${sort.key}"]  > .sortable`)
+            if (sort.order == "1")
+                element.dispatchEvent(new Event("click", { 'bubbles': true }))
+            else if (sort.order == "-1") {
+                element.dispatchEvent(new Event("click", { 'bubbles': true }))
+                element.dispatchEvent(new Event("click", { 'bubbles': true }))
+            }
+        }
+        if (filter.key != "") {
+            let button = this.shadow.querySelector(`th[data-key="${filter.key}"] > button`)
+            button.dispatchEvent(new Event("click", { 'bubbles': true }))
+            let element = this.shadow.querySelector(`th[data-key="${filter.key}"] > input`)
+            element.removeAttribute("hidden")
+            element.value = filter.value
+            element.dispatchEvent(new Event("input", { 'bubbles': true }))
+        }
+    }
+    /**
+     * Utils function to compare elements in array
+     * 
+     * @param  {string} property
+     */
+     dynamicSort = (property: string) => {
+        var sortOrder = 1;
+        if (property[0] === "-") {
+            sortOrder = -1;
+            property = property.substr(1);
+        }
+        return function (a: any, b: any) {
+            var result = (a[property] < b[property]) ? -1 : (a[property] > b[property]) ? 1 : 0;
+            return result * sortOrder;
+        }
+    }
+    /**
+     * Restore the default state of the sorting and filtering elements
+     * 
+     * @param  {HTMLElement} sortElementToPrevent?
+     * @param  {HTMLElement} filterElementToPrevent?
+     */
+    restoreDefaultSorting = (sortElementToPrevent?: HTMLElement, filterElementToPrevent?: HTMLElement) => {
+        let tableHead: HTMLElement = this.shadow.querySelector('thead')
+        let inputs = tableHead.querySelectorAll('input')
+        inputs.forEach((input) => {
+            let dataKey = input.parentElement!.getAttribute("data-key")
+            if (dataKey != filterElementToPrevent?.getAttribute("data-key")) {
+                input.value = ""
+                input.setAttribute("hidden", "true")
+            }
 
+        })
+        let sortElements = tableHead.querySelectorAll(".sortable")
+        sortElements.forEach((elt) => {
+            if (elt != sortElementToPrevent) {
+                let orderElement = elt.lastElementChild
+                orderElement!.remove()
+                elt.insertAdjacentHTML("beforeend", tplOrder("0", "▶"))
+            }
+
+        })
+    }
+    /**
+     * Function to handle input event on the search input
+     * 
+     * @param  {Event} evt
+     */
+    handleSearch(evt: Event) {
+        //evt.preventDefault();
+        let elt = evt.target as HTMLInputElement
+        let value = elt.value.trim()
+        let parentElement = elt.parentElement
+        let key = parentElement!.getAttribute("data-key")
+        this.setFilterCache({ key: key!, value: value })
+        this.restoreDefaultSorting(undefined, parentElement!)
+        let tableBody: HTMLElement = this.shadow.querySelector("tbody")
+        let tableData = tableBody.querySelectorAll(`td[data-header="${key}"]`)
+        tableData.forEach((td) => {
+            td.lastElementChild!.textContent!.toLowerCase().includes(value.toLowerCase()) ? td.parentElement!.removeAttribute("hidden") : td.parentElement!.setAttribute("hidden", "true")
+        })
+    }
+    /**
+     * Function to handle the click event on the table head to sort the data
+     * 
+     * @param  {MouseEvent} evt
+     */
+    handleSorting = (evt: MouseEvent) => {
+        let elt = evt.currentTarget as HTMLElement
+        let parentElement = elt.parentElement
+        let key = parentElement!.getAttribute("data-key")
+        let orderElement = elt.lastElementChild
+        let order = orderElement!.getAttribute("data-order")
+        orderElement!.remove()
+        this.restoreDefaultSorting(elt, undefined)
+        let sortedData = [...this.data]
+        switch (order) {
+            case "0":
+                elt.insertAdjacentHTML("beforeend", tplOrder("1", "▲"))
+                sortedData.sort(this.dynamicSort(key ? key : ""))
+                this.setSortCache({ key: key!, order: "1" })
+                break
+            case "-1":
+                elt.insertAdjacentHTML("beforeend", tplOrder("0", "▶"))
+                sortedData = this.data
+                this.setSortCache({ key: key!, order: "0" })
+                break
+            case "1":
+                elt.insertAdjacentHTML("beforeend", tplOrder("-1", "▼"))
+                sortedData.sort(this.dynamicSort("-" + key))
+                this.setSortCache({ key: key!, order: "-1" })
+                break
+        }
+        const table = this.shadow.querySelector("table")!
+        const tbody = table.tBodies[0]
+        let i = 0
+        sortedData.forEach((row) => {
+            this.appendRow(tbody, { id: i, row: row })
+            i++;
+        })
+
+    }
+    /**
+     * Function to handle the click event on the filter button
+     * 
+     * @param  {Event} evt
+     */
+    handleFilter = (evt: Event) => {
+        let elt = evt.target as HTMLElement
+        console.log('filter')
+        this.restoreDefaultSorting(undefined, elt.parentElement!)
+        let tableBody: HTMLElement = this.shadow.querySelector("tbody")
+        let tableRow = tableBody.querySelectorAll(`tr[hidden="true"]`)
+        tableRow.forEach((tr) => tr.removeAttribute("hidden"))
+        let lastElementChild = elt.parentElement!.lastElementChild
+        if (lastElementChild!.getAttribute("hidden") != null) {
+            lastElementChild!.removeAttribute("hidden")
+        }
+        else {
+            lastElementChild!.setAttribute("hidden", "true")
+        }
+    }
+    
+    /**
+     * Append a data row to the table body
+     * 
+     * @param  {HTMLTableSectionElement} tbody The table body
+     * @param  {IRow} data The data to insert
+     */
     appendRow(tbody: HTMLTableSectionElement, data: IRow) {
-        const row = tbody.querySelector("#tr_"+data.id)
+        const row = tbody.querySelector("#tr_" + data.id)
         if (row != null) {
             row.remove()
         }
         const props = this.getProps()
-        const line = tplLine(props,data)
-     
+        const line = tplLine(props, data)
+
         tbody.insertAdjacentHTML("beforeend", line)
     }
-
+    /**
+     * Function to fetch data from the src attribute and load it
+     */
     loadData() {
         if (this.src == "")
             console.error("specify base URL of http data service in src attribute")
         fetch(this.src, {
             method: "GET",
-            headers: {"Accept": "application/json; charset=UTF-8"}
+            headers: { "Accept": "application/json; charset=UTF-8" }
         })
-        .then(resp => {
-            return resp.json()
-        })
-        .then(map => {
-            const table = this.shadow.querySelector("table")!
-            const tbody = table.tBodies[0]
-            const props = this.getProps()
-            let i: number = 0
-            for (let id in map) {
-                
-                const s = JSON.parse(this.columns)
+            .then(resp => {
+                return resp.json()
+            })
+            .then(map => {
+                const table = this.shadow.querySelector("table")!
+                const tbody = table.tBodies[0]
+                const props = this.getProps()
+                let i: number = 0
+                for (let id in map) {
 
-                for (let column in props.keys) {
+                    const s = JSON.parse(this.columns)
 
-                    let c = props.keys[column]
-                    if (map[id][c]) {
-                        s[c] = map[id][c] 
-                    }else{
-                        s[c] = ""
+                    for (let column in props.keys) {
+
+                        let c = props.keys[column]
+                        if (map[id][c]) {
+                            s[c] = map[id][c]
+                        } else {
+                            s[c] = ""
+                        }
                     }
+                    let data: IRow = { id: i, row: s }
+                    this.data.push(s)
+                    this.appendRow(tbody, data)
+                    i++
                 }
-                let data: IRow ={id: i, row: s}
-                
-                this.data.push(s)
-                this.appendRow(tbody, data)
-                i++
-            }
-            this.listenEvents()
-            this.loadCacheValues()
-        })
-        .catch((reason: any) => {
-            console.error(reason)
-        })
-        
+                this.listenEvents()
+                this.loadCacheValues()
+            })
+            .catch((reason: any) => {
+                console.error(reason)
+            })
     }
 
-    
 
-    listenEvents(){
+    /**
+     * Instanciate and bind sorting and fitlering event listeners
+     * 
+     * @event "click" on table header to trigger sorting function
+     * @event "click" on filter button to reveal the search input
+     * @event "input" on seacrh input to trigger filtering function
+     */
+    listenEvents() {
 
         const buttonFilter = this.shadow.querySelectorAll(".filter")
         const inputFilter = this.shadow.querySelectorAll(".search")
@@ -461,9 +599,10 @@ class TableList extends HTMLElement{
             header.addEventListener("click", this.handleSorting.bind(this))
         })
     }
-
+    /**
+     * Function to initialize the Table
+     */
     initTable() {
-        console.log("called once")
         let table = this.shadow.querySelector("table")
         if (table != null) {
             table.remove()
@@ -474,13 +613,10 @@ class TableList extends HTMLElement{
             table = this.shadow.querySelector("table")
         }
         if (table != null) {
-            console.log('in')
             const props = this.getProps()
             table!.insertAdjacentHTML("afterbegin", tplTable(props))
             this.loadData()
-            
-
-        }      
+        }
     }
 }
 customElements.define("il-table", TableList);
