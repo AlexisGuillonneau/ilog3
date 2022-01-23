@@ -86,7 +86,7 @@ const tplIcon = (icon) => `<i class="${icon}"></i>`;
  *
  * @returns string
  */
-const tplFilters = () => ` <button type="button" class="filter">Filter</button><input type="text" class="search" placeholder="  Type to Search..." hidden/>`;
+const tplFilters = () => ` <button type="button" class="filter"><i class="fa fa-search"></i></button><input type="text" class="search" placeholder="  Type to Search..." hidden/>`;
 /**
  * Generate the template for the order caret
  *
