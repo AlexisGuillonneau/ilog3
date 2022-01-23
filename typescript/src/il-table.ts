@@ -154,17 +154,18 @@ class TableList extends HTMLElement{
     }
 
     disconnectedCallback() {
-       
-
-        // _sortButton.forEach((btn) => {
-        //     btn.removeEventListener("click", this.handleSort);
-        // })
-        // _filterButton.forEach((btn) => {
-        //     btn.removeEventListener("click", this.handleFilter)
-        // })
-        // _filterInput.forEach((btn) => {
-        //     btn.removeEventListener("keydown", this.handleSearch)
-        // })
+        const buttonFilter = this.shadow.querySelectorAll(".filter")
+        const inputFilter = this.shadow.querySelectorAll(".search")
+        const headers = this.shadow.querySelectorAll(".sortable")
+        buttonFilter.forEach((btn: HTMLElement) => {
+            btn.removeEventListener("click", this.handleFilter.bind(this))
+        })
+        inputFilter.forEach((btn: HTMLElement) => {
+            btn.removeEventListener("input", this.handleSearch.bind(this))
+        })
+        headers.forEach((header: HTMLElement) => {
+            header.removeEventListener("click", this.handleSorting.bind(this))
+        })  
     }
 
     getSortCache(): ISort {
