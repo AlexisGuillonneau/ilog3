@@ -142,7 +142,7 @@ class TableList extends HTMLElement{
     }
 
     connectedCallback() {
-        this.initTable()        
+        
     }
 
     static get observedAttributes() {
@@ -155,6 +155,8 @@ class TableList extends HTMLElement{
             case 'icons':
                 this.updateIcons(valNew)
                 break
+            default:
+                this.initTable()
         }
     }
 
@@ -449,6 +451,10 @@ class TableList extends HTMLElement{
 
     initTable() {
         let table = this.shadow.querySelector("table")
+        if (table != null) {
+            table.remove()
+            table = null
+        }
         if (table == null) {
             this.shadow.appendChild(document.createElement("table"))
             table = this.shadow.querySelector("table")

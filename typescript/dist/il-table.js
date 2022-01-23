@@ -180,7 +180,6 @@ class TableList extends HTMLElement {
         //_shadow.appendChild(template.content.cloneNode(true))
     }
     connectedCallback() {
-        this.initTable();
     }
     static get observedAttributes() {
         return ["src", "columns", "icons"];
@@ -191,6 +190,8 @@ class TableList extends HTMLElement {
             case 'icons':
                 this.updateIcons(valNew);
                 break;
+            default:
+                this.initTable();
         }
     }
     disconnectedCallback() {
@@ -209,11 +210,9 @@ class TableList extends HTMLElement {
     }
     updateIcons(valNew) {
         const jsoIcons = JSON.parse(valNew);
-        console.log(jsoIcons);
         Object.keys(jsoIcons).forEach(key => {
             let thead = this.shadow.querySelector(`th[data-key="${key}"]`);
             if (thead != null) {
-                console.log(thead);
                 let icon = thead.querySelector("i");
                 icon.remove();
                 thead.insertAdjacentHTML("afterbegin", tplIcon(jsoIcons[key]));
@@ -375,6 +374,10 @@ class TableList extends HTMLElement {
     }
     initTable() {
         let table = this.shadow.querySelector("table");
+        if (table != null) {
+            table.remove();
+            table = null;
+        }
         if (table == null) {
             this.shadow.appendChild(document.createElement("table"));
             table = this.shadow.querySelector("table");
