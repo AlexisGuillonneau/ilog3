@@ -1,12 +1,12 @@
 "use strict";
 /* *********************************** Typing **************************************** */
-let css = document.createElement("template");
-css.innerHTML = `
+let template = document.createElement("template");
+template.innerHTML = `
+<link href="/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 <style>
 table {
     font-family: Arial, Helvetica, sans-serif;
     border-collapse: collapse;
-    width: 100%;
     
 }
 thead {
@@ -15,20 +15,20 @@ thead {
     color: var(--font-color-title, black);
 }
 td, tr {
-    border-style: solid;
-    border-color: black;
-    border-width: 2px;
+    border-style: var(--cell-border-style, solid);
+    border-color: var(--cell-border-color, black);
+    border-width: var(--cell-border-width, 2px);
 }
-tr:nth-child(even){background-color: #f2f2f2;}
+tr:nth-child(even){background-color: var(--color-switch-line, #f2f2f2);}
 .filter{
-    background-color: grey;
+    background-color: var(--search-background-color, grey);
     border-radius: 25px;
 }
 .search{
     border-radius: 25px;
     border-width: 1px;
 }
-tbody>tr:hover {background-color: #ccc;}
+tbody>tr:hover {background-color: var(--mouse-over-cell-color, #ccc);}
 .badge {
     display: inline-block;
     min-width: 1.5em; /* em unit */
@@ -67,43 +67,69 @@ tbody>tr:hover {background-color: #ccc;}
 }
 </style>
 `;
-const getLibBadge = (type) => {
-    switch (type) {
-        case 'string':
-            type = "a-Z";
-            break;
-        case 'number':
-            type = "0-9";
-            break;
-        case 'undefined':
-            type = "NaN";
-            break;
-        case 'object':
-            type = "{ }";
-            break;
-        case 'boolean':
-            type = " ";
-            break;
-    }
-    return type;
-};
+/**
+ * Lambda function to concatenate string
+ *
+ * @param  {string} res
+ * @param  {string} str
+ */
 const concat = (res, str) => res + str;
-const tplFilters = () => ` <button type="button" class="filter">Filter</button><input type="text" class="search" placeholder="  Type to Search..." hidden/>`;
-const tplOrder = (order, cartet) => `<span data-order="${order}">${cartet}</span>`;
-const tplCell = (data, column) => `<td data-header="${column}" data-type="${typeof data}">
-    <span class="badge ${typeof data}">${getLibBadge(typeof data)}</span><span>${data}</span>
+/**
+ * Generate the template of an icon
+ *
+ * @param  {string} icon CSS class from font-awesome.css
+ * @returns string
+ */
+const tplIcon = (icon) => `<i class="${icon}"></i>`;
+/**
+ * Generate the template for the filter feature
+ *
+ * @returns string
+ */
+const tplFilters = () => ` <button type="button" class="filter"><i class="fa fa-search"></i></button><input type="text" class="search" placeholder="  Type to Search..." hidden/>`;
+/**
+ * Generate the template for the order caret
+ *
+ * @param  {string} order 0: default, 1: a->z order, -1: z->a order
+ * @param  {string} caret Character caret to visualize the order
+ */
+const tplOrder = (order, caret) => `<span data-order="${order}">${caret}</span>`;
+/**
+ * Generate the template for a table table
+ *
+ * @param  {any} data
+ * @param  {string} column
+ */
+const tplCell = (data, column) => `<td data-header="${column}"><span>${data}</span>
     </td>`;
+/**
+ * Generate the template for the table rows
+ *
+ * @param  {IConfig} props
+ * @param  {IRow} data
+ */
 const tplLine = (props, data) => `<tr id="tr_${data.id}">
 ${props.keys.map(key => tplCell(data.row[key], key)).reduce(concat)}
 </tr>
 `;
+/**
+ * Generate the template for the table header
+ *
+ * @param  {IConfig} props
+ * @returns string
+ */
 const tplHeader = (props) => {
     let header = "";
     for (let i = 0; i < props.keys.length; i++) {
-        header += `<th data-key="${props.keys[i]}"><span class="sortable">${props.headers[i]} <span data-order="0">▶</span></span>${tplFilters()}</th>`;
+        header += `<th data-key="${props.keys[i]}">${props.icons ? tplIcon(props.icons[i]) : ""} <span class="sortable"><span class="il-table-header">${props.headers[i]}</span> <span data-order="0">▶</span></span>${tplFilters()}</th>`;
     }
     return header;
 };
+/**
+ * Generate the template for the table
+ *
+ * @param  {IConfig} props
+ */
 const tplTable = (props) => `
     <thead>
         <tr>
@@ -113,9 +139,17 @@ const tplTable = (props) => `
     <tbody>
     </tbody>`;
 class TableList extends HTMLElement {
+    /**
+     * Constructor of TableList
+     */
     constructor() {
         super();
         this.data = [];
+        /**
+         * Utils function to compare elements in array
+         *
+         * @param  {string} property
+         */
         this.dynamicSort = (property) => {
             var sortOrder = 1;
             if (property[0] === "-") {
@@ -127,6 +161,12 @@ class TableList extends HTMLElement {
                 return result * sortOrder;
             };
         };
+        /**
+         * Restore the default state of the sorting and filtering elements
+         *
+         * @param  {HTMLElement} sortElementToPrevent?
+         * @param  {HTMLElement} filterElementToPrevent?
+         */
         this.restoreDefaultSorting = (sortElementToPrevent, filterElementToPrevent) => {
             let tableHead = this.shadow.querySelector('thead');
             let inputs = tableHead.querySelectorAll('input');
@@ -146,6 +186,11 @@ class TableList extends HTMLElement {
                 }
             });
         };
+        /**
+         * Function to handle the click event on the table head to sort the data
+         *
+         * @param  {MouseEvent} evt
+         */
         this.handleSorting = (evt) => {
             let elt = evt.currentTarget;
             let parentElement = elt.parentElement;
@@ -180,6 +225,11 @@ class TableList extends HTMLElement {
                 i++;
             });
         };
+        /**
+         * Function to handle the click event on the filter button
+         *
+         * @param  {Event} evt
+         */
         this.handleFilter = (evt) => {
             let elt = evt.target;
             console.log('filter');
@@ -196,29 +246,159 @@ class TableList extends HTMLElement {
             }
         };
         this.shadow = this.attachShadow({ mode: "open" });
-        this.shadow.appendChild(css.content.cloneNode(true));
-        //_shadow.appendChild(template.content.cloneNode(true))
+        this.shadow.appendChild(template.content.cloneNode(true));
     }
+    /**
+     * Lifecycle connected callback
+     */
     connectedCallback() {
-        this.initTable();
     }
+    /**
+     * Setup observed attributes for the lifecycle attribute changed callback
+     */
     static get observedAttributes() {
-        return ["src", "columns"];
+        return ["src", "columns", "icons"];
     }
+    /**
+     * Lifecycle attribute changed callback
+     *
+     * @param  {string} namAttr Attriubte name changed
+     * @param  {string} valOld Old value of the attribute
+     * @param  {string} valNew New value of the attribute
+     */
     attributeChangedCallback(namAttr, valOld, valNew) {
-        console.log(`attribute ${namAttr} changes from ${valOld} to ${valNew}`);
+        console.log(`Attribute ${namAttr} changes from ${valOld} to ${valNew}`);
+        switch (namAttr) {
+            case 'icons':
+                this.updateIcons(valNew);
+                break;
+            case 'src':
+                this.initTable();
+                break;
+            case 'columns':
+                this.updateColumns(valNew);
+        }
     }
+    /**
+     * Lifecycle disconnected callback, remove all event listener binded to the web component
+     */
     disconnectedCallback() {
-        // _sortButton.forEach((btn) => {
-        //     btn.removeEventListener("click", this.handleSort);
-        // })
-        // _filterButton.forEach((btn) => {
-        //     btn.removeEventListener("click", this.handleFilter)
-        // })
-        // _filterInput.forEach((btn) => {
-        //     btn.removeEventListener("keydown", this.handleSearch)
-        // })
+        const buttonFilter = this.shadow.querySelectorAll(".filter");
+        const inputFilter = this.shadow.querySelectorAll(".search");
+        const headers = this.shadow.querySelectorAll(".sortable");
+        buttonFilter.forEach((btn) => {
+            btn.removeEventListener("click", this.handleFilter.bind(this));
+        });
+        inputFilter.forEach((btn) => {
+            btn.removeEventListener("input", this.handleSearch.bind(this));
+        });
+        headers.forEach((header) => {
+            header.removeEventListener("click", this.handleSorting.bind(this));
+        });
     }
+    /**
+     * Setter function for columns attribute
+     *
+     * @param  {string} valNew New value for the attribute
+     */
+    set columns(valNew) {
+        this.setAttribute("columns", valNew);
+    }
+    /**
+     * Getter function for columns attribute
+     *
+     * @returns string JSON string contained in the attribute
+     */
+    get columns() {
+        var _a;
+        const attr = (_a = this.getAttribute("columns")) !== null && _a !== void 0 ? _a : '{"key0" : "Header0", "key1", "Header1"}';
+        return attr;
+    }
+    /**
+     * Setter function for src attribute
+     *
+     * @param  {string} valNew New value for the attribute
+     */
+    set src(valNew) {
+        this.setAttribute("src", valNew);
+    }
+    /**
+     * Getter function for src attribute
+     *
+     * @returns string JSON string contained in the attribute
+     */
+    get src() {
+        var _a;
+        const attr = (_a = this.getAttribute("src")) !== null && _a !== void 0 ? _a : "";
+        return attr;
+    }
+    /**
+     * Setter function for icons attribute
+     *
+     * @param  {string} valNew New value for the attribute
+     */
+    set icons(valNew) {
+        this.setAttribute("icons", valNew);
+    }
+    /**
+     * Getter function for icons attribute
+     *
+     * @returns string JSON object containing the icons class from font-awesome
+     */
+    get icons() {
+        var _a;
+        const attr = (_a = this.getAttribute("icons")) !== null && _a !== void 0 ? _a : "";
+        return attr;
+    }
+    /**
+     *
+     *
+     * @returns IConfig Component configuration from attributes
+     */
+    getProps() {
+        const jsoColumns = JSON.parse(this.columns);
+        const jsoIcons = this.icons == "" ? null : JSON.parse(this.icons);
+        return {
+            headers: Object.values(jsoColumns),
+            keys: Object.keys(jsoColumns),
+            icons: jsoIcons ? Object.values(jsoIcons) : null
+        };
+    }
+    /**
+     * Allow the update of the columns header
+     *
+     * @param  {string} valNew New value for the attribute
+     */
+    updateColumns(valNew) {
+        const jsoColumns = JSON.parse(valNew);
+        Object.keys(jsoColumns).forEach(key => {
+            let thead = this.shadow.querySelector(`th[data-key="${key}"] > .sortable > .il-table-header`);
+            if (thead != null) {
+                thead.innerHTML = jsoColumns[key];
+            }
+        });
+    }
+    /**
+     * Allow the update of the icons
+     *
+     * @param  {string} valNew New value for the attribute
+     */
+    updateIcons(valNew) {
+        const jsoIcons = JSON.parse(valNew);
+        Object.keys(jsoIcons).forEach(key => {
+            let thead = this.shadow.querySelector(`th[data-key="${key}"]`);
+            if (thead != null) {
+                let icon = thead.querySelector("i");
+                icon.remove();
+                thead.insertAdjacentHTML("afterbegin", tplIcon(jsoIcons[key]));
+            }
+        });
+    }
+    /**
+     * Return the last sorting indicator stored in the local cache
+     *
+     * @returns ISort
+     */
     getSortCache() {
         let cache = localStorage.getItem('sort');
         if (cache) {
@@ -229,9 +409,19 @@ class TableList extends HTMLElement {
             return { key: "", order: "" };
         }
     }
+    /**
+     * Store the value of the current sorting indicator in the local cache
+     *
+     * @param  {ISort} sortCache
+     */
     setSortCache(sortCache) {
         localStorage.setItem('sort', JSON.stringify(sortCache));
     }
+    /**
+     * Return the last filtering indicator stored in the local cache
+     *
+     * @returns IFilter
+     */
     getFilterCache() {
         let cache = localStorage.getItem("filter");
         if (cache) {
@@ -242,11 +432,18 @@ class TableList extends HTMLElement {
             return { key: "", value: "" };
         }
     }
+    /**
+     * Store the current filtering indicator in the local cache
+     *
+     * @param  {IFilter} filterCache
+     */
     setFilterCache(filterCache) {
         localStorage.setItem("filter", JSON.stringify(filterCache));
     }
+    /**
+     * Search for sorting or filtering indicator in the local cache and trigger event to match these indicator
+     */
     loadCacheValues() {
-        console.log("in");
         let filter = this.getFilterCache();
         let sort = this.getSortCache();
         if (sort.key != "") {
@@ -259,18 +456,26 @@ class TableList extends HTMLElement {
             }
         }
         if (filter.key != "") {
+            let button = this.shadow.querySelector(`th[data-key="${filter.key}"] > button`);
+            button.dispatchEvent(new Event("click", { 'bubbles': true }));
             let element = this.shadow.querySelector(`th[data-key="${filter.key}"] > input`);
-            element.setAttribute("hidden", true);
+            element.removeAttribute("hidden");
             element.value = filter.value;
             element.dispatchEvent(new Event("input", { 'bubbles': true }));
         }
     }
+    /**
+     * Function to handle input event on the search input
+     *
+     * @param  {Event} evt
+     */
     handleSearch(evt) {
         //evt.preventDefault();
         let elt = evt.target;
         let value = elt.value.trim();
         let parentElement = elt.parentElement;
         let key = parentElement.getAttribute("data-key");
+        this.setFilterCache({ key: key, value: value });
         this.restoreDefaultSorting(undefined, parentElement);
         let tableBody = this.shadow.querySelector("tbody");
         let tableData = tableBody.querySelectorAll(`td[data-header="${key}"]`);
@@ -278,26 +483,12 @@ class TableList extends HTMLElement {
             td.lastElementChild.textContent.toLowerCase().includes(value.toLowerCase()) ? td.parentElement.removeAttribute("hidden") : td.parentElement.setAttribute("hidden", "true");
         });
     }
-    set columns(valNew) {
-        this.setAttribute("columns", valNew);
-    }
-    get columns() {
-        var _a;
-        const attr = (_a = this.getAttribute("columns")) !== null && _a !== void 0 ? _a : '{"key0" : "Header0", "key1", "Header1"}';
-        return attr;
-    }
-    get src() {
-        var _a;
-        const attr = (_a = this.getAttribute("src")) !== null && _a !== void 0 ? _a : "";
-        return attr;
-    }
-    getProps() {
-        const jsoColumns = JSON.parse(this.columns);
-        return {
-            headers: Object.values(jsoColumns),
-            keys: Object.keys(jsoColumns)
-        };
-    }
+    /**
+     * Append a data row to the table body
+     *
+     * @param  {HTMLTableSectionElement} tbody The table body
+     * @param  {IRow} data The data to insert
+     */
     appendRow(tbody, data) {
         const row = tbody.querySelector("#tr_" + data.id);
         if (row != null) {
@@ -307,6 +498,9 @@ class TableList extends HTMLElement {
         const line = tplLine(props, data);
         tbody.insertAdjacentHTML("beforeend", line);
     }
+    /**
+     * Function to fetch data from the src attribute and load it
+     */
     loadData() {
         if (this.src == "")
             console.error("specify base URL of http data service in src attribute");
@@ -345,6 +539,13 @@ class TableList extends HTMLElement {
             console.error(reason);
         });
     }
+    /**
+     * Instanciate and bind sorting and fitlering event listeners
+     *
+     * @event "click" on table header to trigger sorting function
+     * @event "click" on filter button to reveal the search input
+     * @event "input" on seacrh input to trigger filtering function
+     */
     listenEvents() {
         const buttonFilter = this.shadow.querySelectorAll(".filter");
         const inputFilter = this.shadow.querySelectorAll(".search");
@@ -359,14 +560,20 @@ class TableList extends HTMLElement {
             header.addEventListener("click", this.handleSorting.bind(this));
         });
     }
+    /**
+     * Function to initialize the Table
+     */
     initTable() {
         let table = this.shadow.querySelector("table");
+        if (table != null) {
+            table.remove();
+            table = null;
+        }
         if (table == null) {
             this.shadow.appendChild(document.createElement("table"));
             table = this.shadow.querySelector("table");
         }
         if (table != null) {
-            console.log('in');
             const props = this.getProps();
             table.insertAdjacentHTML("afterbegin", tplTable(props));
             this.loadData();

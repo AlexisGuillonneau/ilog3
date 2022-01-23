@@ -8,7 +8,7 @@ il-table{
   /*Couleur de l'écriture (noir par défaut)*/
   --font-color-title: white;
   /*Couleur de fond du titre (#4da6ff par défaut )*/
-  --background-title-color : red;
+  --background-title-color : rgb(76, 99, 141);
   /*Style de la bordure des cellules (solid par défaut)*/
   /*--cell-border-style*/
   /*Couleur de la bordure des cellules (noir par défaut)*/
