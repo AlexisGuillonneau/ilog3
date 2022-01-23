@@ -12,6 +12,7 @@ interface IRow {
 interface IConfig {
     keys: string[]
     headers: string[]
+    icons: string[]
 }
 
 interface IFilter {
@@ -24,8 +25,9 @@ interface ISort {
     order: string
 }
 
-let css = document.createElement("template");
-css.innerHTML  = `
+let template = document.createElement("template");
+template.innerHTML  = `
+<link href="/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 <style>
 table {
     font-family: Arial, Helvetica, sans-serif;
@@ -91,36 +93,15 @@ tbody>tr:hover {background-color: var(--mouse-over-cell-color, #ccc);}
 </style>
 `
 
-
-const getLibBadge = (type: string) => {
-    switch(type) {
-        case 'string': 
-            type = "a-Z"
-            break
-        case 'number':
-            type = "0-9"
-            break
-        case 'undefined':
-            type = "NaN"
-            break
-        case 'object':
-            type = "{ }"
-            break
-        case 'boolean':
-            type = " "
-            break
-    }
-    return type
-}
-
 const concat = (res: string, str: string) => res + str
+
+const tplIcon = (icon: string) : string => `<i class="${icon}"></i>`
 
 const tplFilters = (): string => ` <button type="button" class="filter">Filter</button><input type="text" class="search" placeholder="  Type to Search..." hidden/>`
 
 const tplOrder = (order: string, caret: string) => `<span data-order="${order}">${caret}</span>`
 
-const tplCell = (data: any, column: string) => `<td data-header="${column}" data-type="${typeof data}">
-    <span class="badge ${typeof data}">${getLibBadge(typeof data)}</span><span>${data}</span>
+const tplCell = (data: any, column: string) => `<td data-header="${column}"><span>${data}</span>
     </td>`
 
 const tplLine = (props: IConfig, data: IRow) => `<tr id="tr_${data.id}">
@@ -130,7 +111,7 @@ ${props.keys.map(key => tplCell(data.row[key], key)).reduce(concat)}
 const tplHeader = (props: IConfig): string => {
     let header = ""
     for(let i = 0; i< props.keys.length; i++){
-        header += `<th data-key="${props.keys[i]}"><span class="sortable">${props.headers[i]} <span data-order="0">▶</span></span>${tplFilters()}</th>`
+        header += `<th data-key="${props.keys[i]}">${tplIcon(props.icons[i])} <span class="sortable">${props.headers[i]} <span data-order="0">▶</span></span>${tplFilters()}</th>`
     }
     return header
 }
@@ -155,7 +136,7 @@ class TableList extends HTMLElement{
         super();
 
         this.shadow = this.attachShadow({ mode: "open"});
-        this.shadow.appendChild(css.content.cloneNode(true))
+        this.shadow.appendChild(template.content.cloneNode(true))
         //_shadow.appendChild(template.content.cloneNode(true))
 
     }
@@ -165,7 +146,7 @@ class TableList extends HTMLElement{
     }
 
     static get observedAttributes() {
-        return ["src", "columns"]
+        return ["src", "columns", "icons"]
     }
 
     attributeChangedCallback(namAttr: string, valOld: string, valNew: string) {
@@ -357,11 +338,22 @@ class TableList extends HTMLElement{
         return attr
     }
 
+    set icons(valNew: string) {
+        this.setAttribute("icons", valNew)
+    }
+
+    get icons(): string {
+        const attr = this.getAttribute("icons") ?? ""
+        return attr
+    }
+
     getProps(): IConfig {
         const jsoColumns = JSON.parse(this.columns)
+        const jsoIcons = JSON.parse(this.icons)
         return {
             headers: Object.values(jsoColumns),
-            keys: Object.keys(jsoColumns)
+            keys: Object.keys(jsoColumns),
+            icons: Object.values(jsoIcons)
         }
     }
 
